@@ -53,7 +53,7 @@ PROJECT_ID=<project id>
 SERVICE_NAME=<service name>
 IMAGE=<image url>
 
-gcloud alpha run deploy $SERVICE_NAME --image=$IMAGE --cpu=8 --memory=32Gi --gpu=1 --port=8080 --no-cpu-throttling  --gpu-type=nvidia-l4 --allow-unauthenticated --region us-central1 --project $PROJECT_ID --execution-environment=gen2 --max-instances 1 --network $NETWORK_NAME --vpc-egress all-traffic
+gcloud alpha run deploy $SERVICE_NAME --image=$IMAGE --cpu=8 --memory=32Gi --gpu=1 --port=8080 --no-cpu-throttling  --gpu-type=nvidia-l4 --region us-central1 --project $PROJECT_ID --execution-environment=gen2 --max-instances 1 --network $NETWORK_NAME --vpc-egress all-traffic
 ```
 
 ## Query
