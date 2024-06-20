@@ -25,9 +25,9 @@ We are going to periodically update the driver under the hood. We leverage the N
 ## Build
 
 ```
-IMAGE=gcr.io/fcrisciani-cr-gpu/torchserve-gcs-xl
-DOCKER_BUILDKIT=1 docker build --target serve-gcs -t $IMAGE .
-docker push $IMAGE
+PROJECT_ID=<project id>
+REPOSITORY=<artifact-registry-repo>
+gcloud builds submit --tag us-central1-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/gpu-torchserve
 ```
 
 ## Deploy
@@ -38,7 +38,7 @@ We are going to use the VPC network `default`.
 
 ### Cloud NAT
 
-Cloud NAT is necessary to access the internet and download the model from HuggingFace, to create a cloud nat instance via the gcloud cli do:
+Cloud NAT allows you to have higher bandwidth to access the internet and download the model from HuggingFace, thereby significantly speeding up the deployment times. To create a cloud nat instance via the gcloud cli do:
 ```
 NETWORK_NAME=default
 
@@ -51,9 +51,9 @@ gcloud compute routers nats create vm-nat --router=nat-router --region=us-centra
 ```
 PROJECT_ID=<project id>
 SERVICE_NAME=<service name>
+IMAGE=<image url>
 
-gcloud alpha run deploy $SERVICE_NAME --image=$IMAGE --cpu=8 --memory=32Gi --gpu=1 --no-cpu-throttling  --gpu-type=nvidia-l4 --allow-unauthenticated --region us-central1 --project fc
-risciani-cr-gpu --execution-environment=gen2 --max-instances 1 --network $NETWORK_NAME --vpc-egress all-traffic
+gcloud alpha run deploy $SERVICE_NAME --image=$IMAGE --cpu=8 --memory=32Gi --gpu=1 --no-cpu-throttling  --gpu-type=nvidia-l4 --allow-unauthenticated --region us-central1 --project $PROJECT_ID --execution-environment=gen2 --max-instances 1 --network $NETWORK_NAME --vpc-egress all-traffic
 ```
 
 ## Query
@@ -61,10 +61,11 @@ risciani-cr-gpu --execution-environment=gen2 --max-instances 1 --network $NETWOR
 `URL=<from the deploy command>`
 
 Note if the service does not allow unauthenticated calls you can use the proxy with: `gcloud beta run services proxy $SERVICE_NAME --region us-central1 --port 8080`
-In that case the `URL=http://localhost:8080`
+In that case the `URL=http://localhost:8080`. Alternatively, you can add `-H "Authorization: Bearer $(gcloud auth print-identity-token)"` to the curl command.
 
 The response is a base64 encoded string of the generated picture so you can query and visualize it with the following bash command:
 
 ```
-time curl $URL/predictions/stable_diffusion -d "data=freshly made hot floral tea in glass kettle on the table, angled shot, midday warm, Nikon D850 105mm, close-up" | base64 --decode > image.jpg
+PROMPT_TEXT="freshly made hot floral tea in glass kettle on the table, angled shot, midday warm, Nikon D850 105mm, close-up"
+time curl $URL/predictions/stable_diffusion -d "data=$PROMPT_TEXT" | base64 --decode > image.jpg
 ```
