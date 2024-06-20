@@ -1,0 +1,51 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/launch-stage: BETA
+  labels:
+    cloud.googleapis.com/location: us-central1
+  name: torchserve-gcs-xl
+  namespace: '257112150376'
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '1'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 469.0.0
+        run.googleapis.com/cpu-throttling: 'false'
+        run.googleapis.com/execution-environment: gen2
+        run.googleapis.com/network-interfaces: '[{"subnetwork": "torch"}]'
+        run.googleapis.com/startup-cpu-boost: 'true'
+        run.googleapis.com/vpc-access-egress: all-traffic
+      labels:
+        client.knative.dev/nonce: ppbhpugdvu
+        run.googleapis.com/startupProbeType: Default
+    spec:
+      containerConcurrency: 80
+      containers:
+      - image: gcr.io/fcrisciani-cr-gpu/torchserve-gcs-xl@sha256:17dabf622b45571e03bfb9e52f294c2af8f9cf0040ec7efcf33215f26928afb6 
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: '8'
+            memory: 32Gi
+            nvidia.com/gpu: '1'
+        startupProbe:
+          failureThreshold: 1800
+          periodSeconds: 1
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 1
+      nodeSelector:
+        run.googleapis.com/accelerator: nvidia-l4
+      serviceAccountName: 257112150376-compute@developer.gserviceaccount.com
+      timeoutSeconds: 3600
+  traffic:
+  - latestRevision: true
+    percent: 100
